@@ -8,6 +8,7 @@ export async function isDemoImage(file){
 }
 export const demoMarkup=`<div class="summary"><strong>Demo case — predefined result</strong><br>Prepared kidney-stone scenario for demonstrating the workflow. This is not a diagnosis or an analysis of the uploaded scan.</div>
 <article class="finding"><h3>Problem: Kidney stones (illustrative case)</h3><div class="body"><span class="status">Educational demonstration · not patient-specific</span>
+<h4>Where is the stone in this fictional case?</h4><p><strong>Right kidney — lower calyx:</strong> one assumed 5 mm stone in a lower urine-collecting pocket of the kidney. This is a prepared case location, not a finding detected in the uploaded picture.</p><p><strong>Other stone locations:</strong> not established. The app has not evaluated the left kidney or ureters, or determined the actual number of stones.</p>
 <h4>What it means</h4><p>Kidney stones are solid deposits in the urinary system. This scenario assumes stones for demonstration; their presence, number, size, location, and obstruction are not established from this image.</p>
 <h4>Fictional case details — not measured from this image</h4><ul>
 <li><strong>Stone size:</strong> 5 mm (assumed for the demo).</li>
