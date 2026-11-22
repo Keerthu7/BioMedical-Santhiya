@@ -16,6 +16,10 @@ The matcher is deliberately limited. Sentence context handling is not a clinical
 
 ## Next implementation stages
 
+### Presentation demo
+
+A designated reference image is identified locally by SHA-256 and opens a conspicuously labelled, predefined kidney-stone educational case. The reference image itself is not bundled, transmitted, or previewed. It is a demonstration fixture, not image diagnosis. Other images continue through written-text OCR. Editing, resizing, or re-encoding the designated file changes its hash and does not select the fixture. Result downloads preserve the demo disclosure. Do not present this fixture as clinical or AI validation.
+
 1. Work with the project guide and a clinical advisor to define supported report types and evaluation labels.
 2. Add PDF extraction and extend photo OCR with rotation, more languages, and clinically evaluated extraction-quality checks.
 3. Build a typed finding schema preserving source text, negation, uncertainty, measurements, and missing context.

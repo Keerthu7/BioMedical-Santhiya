@@ -1,8 +1,9 @@
 import {analyze,samples} from './engine.mjs';
 import {recognizeImage} from './ocr.js';
+import {isDemoImage,demoMarkup} from './demo-case.mjs';
 const $=id=>document.getElementById(id);
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let downloadText='',controller,previewUrl,pendingImage,operation=0,fromImage=false;
+let downloadText='',controller,previewUrl,pendingImage,operation=0,fromImage=false,demoSelected=false;
 function changed(){
  $('count').textContent=`${$('report').value.length.toLocaleString()} / 30,000`;
  $('results').innerHTML='<div class="empty"><span>✧</span><h3>Ready to analyse</h3><p>Click Analyse report to see matched problems and possible care options.</p></div>';
@@ -10,9 +11,9 @@ function changed(){
 }
 function setBusy(busy){$('analyze').disabled=busy;$('analyze').textContent=busy?'Analysing report…':'Analyse report';$('report').readOnly=busy;$('cancel-ocr').hidden=!busy;$('ocr-progress').hidden=!busy;}
 function resetUpload(){
- operation++;controller?.abort();controller=undefined;pendingImage=undefined;fromImage=false;
+ operation++;controller?.abort();controller=undefined;pendingImage=undefined;fromImage=false;demoSelected=false;
  if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=undefined;
- $('preview').removeAttribute('src');$('image-panel').hidden=true;$('ocr-review').hidden=true;setBusy(false);
+ $('preview').removeAttribute('src');$('preview').hidden=false;$('image-panel').hidden=true;$('ocr-review').hidden=true;setBusy(false);
 }
 function validateText(value){
  if(value.length>30000||value.includes('\u0000'))throw Error('Use a readable report with at most 30,000 characters.');
@@ -34,8 +35,14 @@ $('file').onchange=async()=>{
  }
  $('filename').textContent=file.name;
  if(isImage){
-  pendingImage=file;previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;$('image-panel').hidden=false;
-  $('ocr-status').textContent='Image ready. Click Analyse report to see problems and possible solutions.';$('text-details').open=false;return;
+  setBusy(true);
+  try{
+   const matched=await isDemoImage(file);if(current!==operation)return;demoSelected=matched;$('image-panel').hidden=false;$('text-details').open=false;
+   if(matched){$('preview').hidden=true;$('filename').textContent='Demo image selected';$('ocr-status').textContent='Demo image ready. Click Analyse report to view the predefined example.';}
+   else{pendingImage=file;previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;$('ocr-status').textContent='Image ready. Click Analyse report to see problems and possible solutions.';}
+  }catch(e){if(current===operation)$('error').textContent='Could not read this image. Choose the file again.';}
+  finally{if(current===operation)setBusy(false);}
+  return;
  }
  setBusy(true);
  try{const value=await file.text();if(current!==operation)return;validateText(value);$('report').value=value;$('text-details').open=true;changed();}
@@ -46,6 +53,10 @@ $('clear').onclick=()=>{resetUpload();$('report').value='';$('file').value='';$(
 $('analyze').onclick=async()=>{
  const current=operation;let timer;setBusy(true);$('error').textContent='';
  try{
+  if(demoSelected){
+   $('results').innerHTML=demoMarkup;$('ocr-status').textContent='Demo case complete — predefined educational result.';
+   downloadText='REPORT COMPANION — DEMO CASE / PREDEFINED RESULT\nNot a diagnosis or scan analysis.\n\n'+$('results').innerText;$('download').hidden=false;return;
+  }
   if(pendingImage){
    controller=new AbortController();const activeController=controller;timer=setTimeout(()=>activeController.abort(),120000);
    $('ocr-status').textContent='Reading the report image…';$('ocr-progress').value=0;
