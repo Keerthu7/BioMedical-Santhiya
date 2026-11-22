@@ -1,4 +1,4 @@
-import {analyze,samples} from './engine.mjs';
+import {analyze} from './engine.mjs';
 import {recognizeImage} from './ocr.js';
 import {isDemoImage,demoMarkup} from './demo-case.mjs';
 const $=id=>document.getElementById(id);
@@ -13,16 +13,13 @@ function setBusy(busy){$('analyze').disabled=busy;$('analyze').textContent=busy?
 function resetUpload(){
  operation++;controller?.abort();controller=undefined;pendingImage=undefined;fromImage=false;demoSelected=false;
  if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=undefined;
- $('preview').removeAttribute('src');$('preview').hidden=false;$('image-panel').hidden=true;$('ocr-review').hidden=true;setBusy(false);
+ $('preview').removeAttribute('src');$('preview').hidden=false;$('image-panel').hidden=true;$('ocr-review').hidden=true;$('text-details').hidden=true;setBusy(false);
 }
 function validateText(value){
  if(value.length>30000||value.includes('\u0000'))throw Error('Use a readable report with at most 30,000 characters.');
  if(value.trim().length<15)throw Error('Not enough readable text was found. Choose a clearer photo of the written report, or paste its text.');
 }
 $('report').addEventListener('input',changed);
-document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>{
- resetUpload();$('report').value=samples[b.dataset.sample];$('text-details').open=true;$('filename').textContent='Synthetic example';$('file').value='';changed();
-});
 $('cancel-ocr').onclick=()=>{
  resetUpload();$('file').value='';$('report').value='';$('filename').textContent='No file selected';changed();$('error').textContent='Analysis canceled. Choose a report to try again.';
 };
@@ -38,14 +35,14 @@ $('file').onchange=async()=>{
   setBusy(true);
   try{
    const matched=await isDemoImage(file);if(current!==operation)return;demoSelected=matched;$('image-panel').hidden=false;$('text-details').open=false;
-   if(matched){$('preview').hidden=true;$('filename').textContent='Demo image selected';$('ocr-status').textContent='Demo image ready. Click Analyse report to view the predefined example.';}
-   else{pendingImage=file;previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;$('ocr-status').textContent='Image ready. Click Analyse report to see problems and possible solutions.';}
+   if(matched){$('preview').hidden=true;$('filename').textContent='Demo image selected';$('ocr-status').textContent='Image selected';}
+   else{pendingImage=file;previewUrl=URL.createObjectURL(file);$('preview').src=previewUrl;$('ocr-status').textContent='Image ready';}
   }catch(e){if(current===operation)$('error').textContent='Could not read this image. Choose the file again.';}
   finally{if(current===operation)setBusy(false);}
   return;
  }
  setBusy(true);
- try{const value=await file.text();if(current!==operation)return;validateText(value);$('report').value=value;$('text-details').open=true;changed();}
+ try{const value=await file.text();if(current!==operation)return;validateText(value);$('report').value=value;$('text-details').hidden=false;$('text-details').open=false;changed();}
  catch(e){if(current===operation)$('error').textContent=e.message;}
  finally{if(current===operation)setBusy(false);}
 };
@@ -54,7 +51,7 @@ $('analyze').onclick=async()=>{
  const current=operation;let timer;setBusy(true);$('error').textContent='';
  try{
   if(demoSelected){
-   $('results').innerHTML=demoMarkup;$('ocr-status').textContent='Demo case complete — predefined educational result.';
+   $('results').innerHTML=demoMarkup;$('ocr-status').textContent='Complete';
    downloadText='REPORT COMPANION — DEMO CASE / PREDEFINED RESULT\nNot a diagnosis or scan analysis.\n\n'+$('results').innerText;$('download').hidden=false;return;
   }
   if(pendingImage){
@@ -63,10 +60,10 @@ $('analyze').onclick=async()=>{
    const value=await recognizeImage(pendingImage,{signal:activeController.signal,onProgress:(status,progress)=>{
     if(current!==operation)return;$('ocr-status').textContent=status==='recognizing text'?`Reading report text… ${Math.round(progress*100)}%`:'Preparing text reader…';$('ocr-progress').value=progress;
    }});
-   if(current!==operation)return;validateText(value);$('report').value=value;pendingImage=undefined;fromImage=true;changed();$('ocr-review').hidden=false;
+   if(current!==operation)return;validateText(value);$('report').value=value;pendingImage=undefined;fromImage=true;changed();$('ocr-review').hidden=false;$('text-details').hidden=false;
   }
   if(current!==operation)return;const text=$('report').value.trim();validateText(text);renderResult(text);
-  if(fromImage)$('ocr-status').textContent='Analysis complete. Check the extracted text against your image.';
+  if(fromImage)$('ocr-status').textContent='Complete';
  }catch(e){
   if(current!==operation)return;$('error').textContent=e.name==='AbortError'?'Analysis timed out. Try a smaller image or paste the text.':e.message;
   if(previewUrl)$('ocr-status').textContent='Analysis did not complete. You can retry or choose another image.';

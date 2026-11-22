@@ -6,11 +6,11 @@ export async function isDemoImage(file){
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
  return hash===demoHash;
 }
-export const demoMarkup=`<div class="summary"><strong>Demo case — predefined result</strong><br>User-supplied presentation content. Counts and visual descriptions below are unverified demo observations, not findings detected or confirmed by this app.</div>
-<article class="finding demo-finding"><h3>Kidney Stone CT Scan <small>Findings &amp; treatment options</small></h3><div class="body"><span class="status">Prepared demonstration · not a diagnosis</span>
-<p><strong>User-supplied demo description:</strong> Multiple stone-like spots appear in both kidneys. This description and the counts below have not been clinically verified; the screenshot alone cannot establish stones, measurements, or precise locations.</p>
-<div class="section-caption">FINDINGS AT A GLANCE</div><div class="kidney-grid"><section class="kidney-card"><h4>Right Kidney</h4><div class="finding-count">~3 <span>stone-like spots</span></div><ul><li>Approximately 3 prominent stone-like spots (user-supplied demo observation).</li><li>Exact size and location cannot be confirmed from the screenshot alone.</li></ul></section>
-<section class="kidney-card"><h4>Left Kidney</h4><div class="finding-count">~3 <span>stone-like spots</span></div><ul><li>Approximately 3 prominent stone-like spots (user-supplied demo observation).</li><li>Some appear clustered together, according to the supplied demo description.</li><li>Exact size and location cannot be confirmed.</li></ul></section></div>
+export const demoMarkup=`<div class="summary"><strong>Demo case — predefined result</strong><br>User-supplied, unverified observations. Not findings detected or confirmed by the app.</div>
+<article class="finding demo-finding"><h3>Kidney Stone CT Scan <small>Findings &amp; treatment options</small></h3><div class="body">
+<p>Demo description: multiple stone-like spots in both kidneys. Exact size and location cannot be confirmed from the screenshot.</p>
+<div class="kidney-grid"><section class="kidney-card"><h4>Right Kidney</h4><div class="finding-count">~3 <span>prominent stone-like spots</span></div><p>Size and precise location unconfirmed.</p></section>
+<section class="kidney-card"><h4>Left Kidney</h4><div class="finding-count">~3 <span>prominent stone-like spots</span></div><p>Some described as clustered. Size and precise location unconfirmed.</p></section></div>
 <h4 class="section-title">Possible Treatment Options</h4><p>General educational overview, not a treatment-selection rule. No size category has been assigned to this image. Location, symptoms, obstruction, infection, stone composition, anatomy, and total stone burden also matter.</p><ul class="size-options">
 <li><strong>Below 5 mm:</strong> Monitoring, appropriate fluids and symptom control may be considered in selected cases. Some small ureter stones may pass; kidney stones may remain in place.</li>
 <li><strong>5–10 mm:</strong> Selected patients may be offered monitoring, medicines, ESWL or an endoscopic procedure, depending on clinical assessment and location.</li>
