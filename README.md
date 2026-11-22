@@ -6,6 +6,10 @@ Sandhiya's ME project foundation: a browser-only, multi-report educational demon
 
 From this directory: `python -m http.server 8080 --directory dist`, then visit http://localhost:8080.
 
+## Deploy on Vercel
+
+Import the GitHub repository and leave Root Directory at the repository root. The tracked `vercel.json` selects the Other framework preset, skips installation/building, and serves the existing `dist` folder. No environment variables are needed. If an older deployment used another root or framework setting, correct the project settings and redeploy the latest `main` commit.
+
 ## Implemented
 
 Paste report text or upload a UTF-8 .txt file (1 MB and 30,000-character limits); synthetic ultrasound, wrist X-ray, and blood examples; keyword matching for four finding groups; conservative context flags; visible unmatched text; linked public medical sources; text explanation download; clear/reset. Multiple finding groups can appear in one report. No negative result establishes a normal report. Reports remain in page memory and downloads only.
