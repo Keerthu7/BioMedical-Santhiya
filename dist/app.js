@@ -1,4 +1,4 @@
-import {haemorrhageCase} from './haemorrhage-case.mjs';
+import {haemorrhageCase,demonstrationReportHTML} from './haemorrhage-case.mjs';
 import {preprocessRGBA,reportHTML} from './mri-engine.mjs';
 const $=s=>document.querySelector(s),KEY='neurotwin.mri.history.v1';
 const state={slots:[null,null],revision:[0,0],loading:[false,false],generation:0,busy:false,records:[],record:null,storageOK:true,selected:null};
@@ -29,16 +29,28 @@ $('#clear').addEventListener('click',()=>{state.slots.forEach(s=>{if(s?.url)URL.
 $('#analysis-form').addEventListener('input',()=>{invalidate();state.busy=false;available();});
 $('#analysis-form').addEventListener('submit',e=>{
  e.preventDefault();if($('#analyse').disabled)return;
+ if(!$('#patient-name').value.trim()){$('#patient-name').setCustomValidity('Enter a patient name.');$('#patient-name').reportValidity();return;}
+ if(!$('#analysis-form').reportValidity())return;
  renderCaseSummary();
 });
 $('#patient-name').addEventListener('input',()=>$('#patient-name').setCustomValidity(''));
 function renderCaseSummary(){
  const host=$('#result-panel'),c=haemorrhageCase;host.replaceChildren();host.hidden=false;
+ const patient={name:$('#patient-name').value.trim(),id:$('#patient-id').value.trim()||`NT-${crypto.randomUUID().slice(0,8).toUpperCase()}`,age:$('#patient-age').value,sex:$('#patient-sex').value};
+ $('#patient-id').value=patient.id;
+ const report={id:`RPT-${crypto.randomUUID().slice(0,8).toUpperCase()}`,createdAt:new Date().toISOString()};
  c.sections.forEach(section=>{
   const block=add(host,'section','','finding');add(block,section.level===3?'h3':'h2',section.title);
   if(section.intro)add(block,'p',section.intro);
   if(section.items.length){const list=add(block,'ul','');section.items.forEach(item=>add(list,'li',item));}
  });
+ const actions=add(host,'div','','report-actions');
+ button(actions,'Download Report',()=>{
+  const html=demonstrationReportHTML(patient,report);
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  const a=document.createElement('a');a.href=url;a.download=`MRI_Report_${patient.name.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50)}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('Report downloaded. Open it to print or save as PDF.');
+ },'primary');
  host.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function download(record){const url=URL.createObjectURL(new Blob([reportHTML(record)],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`MRI_Report_${record.patient.name.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50)}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);toast('Report downloaded. Open it to print or save as PDF.');}

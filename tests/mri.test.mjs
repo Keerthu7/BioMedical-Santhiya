@@ -39,9 +39,16 @@ test('finding and next step stay honest for missing, uncertain and predicted res
 test('haemorrhage demonstration report identifies its source and escapes uploaded details',async()=>{
  const {haemorrhageCase,demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
  const html=demonstrationReportHTML('<script>patient</script>',[{slot:'B',filename:'<img onerror=bad>',preview:'javascript:bad'}]);
- assert(html.includes('Educational case summary'));assert(html.includes('not an automated diagnosis'));
+ assert(html.includes('Educational case reference'));assert(html.includes('not a scan-derived diagnosis'));
  assert(!html.includes('Scan B'));assert(html.includes('&lt;script&gt;patient'));
  assert(!html.includes('javascript:bad'));assert(!html.includes('<img onerror'));
  for(const section of haemorrhageCase.sections)assert(html.includes(section.title));
  assert(html.includes('What are the treatment solutions?'));assert(html.includes('Print / Save as PDF'));
+});
+
+test('professional report includes escaped patient details, issue metadata and numbered points',async()=>{
+ const {demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
+ const html=demonstrationReportHTML({name:'Sample & Patient',id:'P-<42>',age:46,sex:'Female'},{id:'RPT-123',createdAt:'2026-11-26T10:00:00Z'});
+ for(const text of ['Sample &amp; Patient','P-&lt;42&gt;','46 years','Female','RPT-123','IST','Patient information','<ol>','@page{size:A4','Project conclusion'])assert(html.includes(text),text);
+ assert(!html.includes('undefined'));assert(!html.includes('Scan A'));assert(!html.includes('Scan B'));
 });

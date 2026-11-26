@@ -66,3 +66,7 @@ Use original MRI images appropriate to the model dataset. Colourised, watermarke
 Upload either or both images and click **Analyse MRI** to view one combined educational summary with the requested problem, medical and surgical treatment options, priorities and possible outcomes. There is no case checkbox, model-status message or separate per-scan output. The brief educational label identifies the fixed case text; this flow does not infer a diagnosis from pixels or save it as a completed AI prediction. The ONNX model utilities and historical reports remain available in the code, but the main form now displays the educational case only. A trained haemorrhage model has not been added.
 
 The default model fetch wrapper also preserves the browser fetch receiver, avoiding the previous illegal-invocation error for consumers of the classifier.
+
+## Patient report download
+
+Enter patient name, age and sex, plus an optional patient number (generated if blank). After Analyse MRI, **Download Report** appears below the conclusion. It downloads a self-contained HTML report named for the patient, with report ID, India-time issue date, patient details and numbered problem/treatment/outcome sections. The A4 print layout includes a Print / Save as PDF button. This is an HTML download with browser PDF printing, not a direct PDF file download. It carries educational context and is not a signed diagnostic report. Patient fields remain on the device; this case report is not added to model-prediction history.
