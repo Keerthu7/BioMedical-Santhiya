@@ -41,7 +41,7 @@ export const lesionCase={
    'Stabilization or reduction in lesion size, depending on its cause.',
    'Improved neurological function and quality of life with treatment and rehabilitation.'
   ]},
-  {title:'Project conclusion',intro:"A brain lesion is an abnormal area of brain tissue that may have several underlying causes. Proper diagnosis is essential to determine whether medical treatment, surgery, radiation therapy, or observation is required. Early treatment and regular monitoring can help prevent complications and improve the patient's outcome.",items:[]}
+  {title:'Conclusion',intro:"A brain lesion is an abnormal area of brain tissue that may have several underlying causes. Proper diagnosis is essential to determine whether medical treatment, surgery, radiation therapy, or observation is required. Early treatment and regular monitoring can help prevent complications and improve the patient's outcome.",items:[]}
  ]
 };
 

@@ -49,7 +49,7 @@ test('haemorrhage demonstration report identifies its source and escapes uploade
 test('professional report includes escaped patient details, issue metadata and numbered points',async()=>{
  const {demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
  const html=demonstrationReportHTML({name:'Sample & Patient',id:'P-<42>',age:46,sex:'Female'},{id:'RPT-123',createdAt:'2026-11-26T10:00:00Z'});
- for(const text of ['Sample &amp; Patient','P-&lt;42&gt;','46 years','Female','RPT-123','IST','Patient information','<ol>','@page{size:A4','Project conclusion'])assert(html.includes(text),text);
+ for(const text of ['Sample &amp; Patient','P-&lt;42&gt;','46 years','Female','RPT-123','IST','Patient information','<ol>','@page{size:A4','Conclusion'])assert(html.includes(text),text);
  assert(!html.includes('undefined'));assert(!html.includes('Scan A'));assert(!html.includes('Scan B'));
 });
 

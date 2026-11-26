@@ -40,7 +40,7 @@ export const haemorrhageCase = {
       'Further brain damage may be prevented.',
       'Rehabilitation may help recover speech, movement and daily activities.'
     ]},
-    {title:'Project conclusion',intro:'Brain haemorrhage is a serious medical condition. Early diagnosis and appropriate treatment are essential. Some patients can be treated with medicines and monitoring, while others may require surgery.',items:[]}
+    {title:'Conclusion',intro:'Brain haemorrhage is a serious medical condition. Early diagnosis and appropriate treatment are essential. Some patients can be treated with medicines and monitoring, while others may require surgery.',items:[]}
   ]
 };
 
