@@ -29,7 +29,7 @@ export function predictionFromLogits(logits, manifest) {
   return {status:review?'review_required':'complete',classId:CLASS_IDS[index],label:review?'Inconclusive — review required':CLASS_LABELS[index],topClass:CLASS_LABELS[index],scores,modelVersion:manifest.version,score:scores[index]};
 }
 export class MRIClassifier {
-  constructor({fetcher=fetch,loadRuntime=()=>import('./runtime/ort.wasm.min.mjs'),cryptoProvider=globalThis.crypto}={}) { this.fetcher=fetcher;this.loadRuntime=loadRuntime;this.crypto=cryptoProvider;this.pending=null; }
+  constructor({fetcher=(...args)=>globalThis.fetch(...args),loadRuntime=()=>import('./runtime/ort.wasm.min.mjs'),cryptoProvider=globalThis.crypto}={}) { this.fetcher=fetcher;this.loadRuntime=loadRuntime;this.crypto=cryptoProvider;this.pending=null; }
   async load() {
     if(this.pending)return this.pending;
     this.pending=this._load().catch(e=>{this.pending=null;throw e;});return this.pending;

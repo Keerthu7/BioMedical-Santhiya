@@ -61,8 +61,8 @@ Each uploaded scan now has a separate problem/finding and next-step explanation,
 
 Use original MRI images appropriate to the model dataset. Colourised, watermarked stock illustrations and screenshots (such as the supplied examples) are not a basis for a clinical diagnosis. Uploading two images does not train or validate the model; the missing trained model remains required for actual detection.
 
-## Haemorrhage presentation case
+## Haemorrhage case summary
 
-Upload the provided example images into Scan A and/or Scan B (either order), enter a fictional presentation name, and select **Use supplied haemorrhage demonstration case**. Click **Analyse MRI · Demo**. The result below the scans includes the supplied problem, medical and surgical options, immediate priorities, possible outcomes and conclusion. A printable HTML demonstration report is available.
+Upload either or both images and click **Analyse MRI** to view one combined educational summary with the requested problem, medical and surgical treatment options, priorities and possible outcomes. There is no case checkbox, model-status message or separate per-scan output. The brief educational label identifies the fixed case text; this flow does not infer a diagnosis from pixels or save it as a completed AI prediction. The ONNX model utilities and historical reports remain available in the code, but the main form now displays the educational case only. A trained haemorrhage model has not been added.
 
-This is user-supplied educational case content, explicitly labelled on screen and in exports. It does not inspect pixels to detect bleeding, use filenames to diagnose, produce a confidence score, or save a demonstration as a completed AI prediction. Unchecking the case option returns to the existing tumour-model inference workflow. The current four-class tumour contract cannot detect haemorrhage; real haemorrhage detection needs a separately trained and evaluated model and clinical validation.
+The default model fetch wrapper also preserves the browser fetch receiver, avoiding the previous illegal-invocation error for consumers of the classifier.

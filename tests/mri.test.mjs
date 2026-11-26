@@ -39,9 +39,9 @@ test('finding and next step stay honest for missing, uncertain and predicted res
 test('haemorrhage demonstration report identifies its source and escapes uploaded details',async()=>{
  const {haemorrhageCase,demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
  const html=demonstrationReportHTML('<script>patient</script>',[{slot:'B',filename:'<img onerror=bad>',preview:'javascript:bad'}]);
- assert(html.includes('Demonstration case'));assert(html.includes('Not an AI detection'));
- assert(html.includes('Scan B'));assert(html.includes('&lt;script&gt;patient'));
+ assert(html.includes('Educational case summary'));assert(html.includes('not an automated diagnosis'));
+ assert(!html.includes('Scan B'));assert(html.includes('&lt;script&gt;patient'));
  assert(!html.includes('javascript:bad'));assert(!html.includes('<img onerror'));
  for(const section of haemorrhageCase.sections)assert(html.includes(section.title));
- assert(html.includes('not a prediction'));assert(html.includes('Print / Save as PDF'));
+ assert(html.includes('What are the treatment solutions?'));assert(html.includes('Print / Save as PDF'));
 });
