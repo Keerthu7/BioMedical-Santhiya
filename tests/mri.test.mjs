@@ -52,3 +52,22 @@ test('professional report includes escaped patient details, issue metadata and n
  for(const text of ['Sample &amp; Patient','P-&lt;42&gt;','46 years','Female','RPT-123','IST','Patient information','<ol>','@page{size:A4','Project conclusion'])assert(html.includes(text),text);
  assert(!html.includes('undefined'));assert(!html.includes('Scan A'));assert(!html.includes('Scan B'));
 });
+
+test('supplied image sets select their own case in either order and reject mixed or unknown inputs',async()=>{
+ const {selectSuppliedCase,lesionCase,suppliedImageHash}=await import('../dist/case-library.mjs');
+ const a='fa7b421fa31dbb6587369c0c7b6d31823818505671a5ea8325590078d27923a3',b='cc31e75cb941e3665a412db00c7c9ac8fdd88ed347581aedc745e15a1948bc79';
+ const c='6663018346aa04a0885b4364a1ea4601dd38cbc8a2adf8b6e2c4bc4bf73d9549',d='57a22266f85df4d56c872c8d0f621eac8f1dd66b0a9862744afd20ee322c184e';
+ assert.match(selectSuppliedCase([a,b]).title,/Haemorrhage/);
+ assert.match(selectSuppliedCase([b,a]).title,/Haemorrhage/);
+ assert.equal(selectSuppliedCase([c,d]),lesionCase);assert.equal(selectSuppliedCase([d,c]),lesionCase);
+ assert.equal(selectSuppliedCase([c]),lesionCase);
+ assert.throws(()=>selectSuppliedCase([a,c]),/different sets/);
+ assert.throws(()=>selectSuppliedCase([c,'unknown']),/does not match/);
+ assert.throws(()=>selectSuppliedCase([]),/Upload/);
+ assert.equal(await suppliedImageHash(bytes,webcrypto),createHash('sha256').update(bytes).digest('hex'));
+ const {demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
+ const html=demonstrationReportHTML({name:'Set 2',age:42,sex:'Male',id:'P2'},{},lesionCase);
+ assert(html.includes('Brain Lesion (Abnormal Brain Tissue) Report'));
+ assert(html.includes('Regular MRI monitoring'));assert(!html.includes('Haematoma evacuation'));
+ assert(!html.includes('<footer'));
+});

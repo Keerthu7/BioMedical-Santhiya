@@ -1,4 +1,5 @@
-import {haemorrhageCase,demonstrationReportHTML} from './haemorrhage-case.mjs';
+import {selectSuppliedCase,suppliedImageHash} from './case-library.mjs';
+import {demonstrationReportHTML} from './haemorrhage-case.mjs';
 import {preprocessRGBA,reportHTML} from './mri-engine.mjs';
 const $=s=>document.querySelector(s),KEY='neurotwin.mri.history.v1';
 const state={slots:[null,null],revision:[0,0],loading:[false,false],generation:0,busy:false,records:[],record:null,storageOK:true,selected:null};
@@ -17,11 +18,11 @@ async function upload(i,file){
  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){toast('Choose PNG, JPG or WEBP. Text reports, PDFs and DICOM are not supported.');return;}
  if(file.size>10485760){toast('Choose an image smaller than 10 MB.');return;}
  const revision=++state.revision[i];state.loading[i]=true;invalidate();available();let url;
- try{url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();if(image.width*image.height>12000000)throw Error('Choose an image below 12 megapixels.');
+ try{const hash=await suppliedImageHash(await file.arrayBuffer());url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();if(image.width*image.height>12000000)throw Error('Choose an image below 12 megapixels.');
  const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(image,0,0);const data=preprocessRGBA(ctx.getImageData(0,0,image.width,image.height).data,image.width,image.height);
  const preview=document.createElement('canvas');preview.width=320;preview.height=240;const pc=preview.getContext('2d');pc.fillStyle='#142b3d';pc.fillRect(0,0,320,240);const scale=Math.min(320/image.width,240/image.height);pc.drawImage(image,(320-image.width*scale)/2,(240-image.height*scale)/2,image.width*scale,image.height*scale);
  if(revision!==state.revision[i]){URL.revokeObjectURL(url);return;}
- if(state.slots[i]?.url)URL.revokeObjectURL(state.slots[i].url);state.slots[i]={url,data,filename:file.name,preview:preview.toDataURL('image/jpeg',.7)};const card=$(`#scan-${i}`);card.querySelector('img').src=url;card.querySelector('img').hidden=false;card.querySelector('.preview-empty').hidden=true;card.querySelector('.filename').textContent=`${file.name} · ${image.width} × ${image.height}`;card.querySelector('button').textContent='Replace MRI image';
+ if(state.slots[i]?.url)URL.revokeObjectURL(state.slots[i].url);state.slots[i]={url,data,hash,filename:file.name,preview:preview.toDataURL('image/jpeg',.7)};const card=$(`#scan-${i}`);card.querySelector('img').src=url;card.querySelector('img').hidden=false;card.querySelector('.preview-empty').hidden=true;card.querySelector('.filename').textContent=`${file.name} · ${image.width} × ${image.height}`;card.querySelector('button').textContent='Replace MRI image';
  }catch(e){if(url)URL.revokeObjectURL(url);if(revision===state.revision[i])toast(e.message.startsWith('Choose')?e.message:'This file could not be decoded. Choose a readable image.');}
  finally{if(revision===state.revision[i]){state.loading[i]=false;available();}}
 }
@@ -31,11 +32,13 @@ $('#analysis-form').addEventListener('submit',e=>{
  e.preventDefault();if($('#analyse').disabled)return;
  if(!$('#patient-name').value.trim()){$('#patient-name').setCustomValidity('Enter a patient name.');$('#patient-name').reportValidity();return;}
  if(!$('#analysis-form').reportValidity())return;
- renderCaseSummary();
+ try{const selectedCase=selectSuppliedCase(state.slots.filter(Boolean).map(slot=>slot.hash));renderCaseSummary(selectedCase);}
+ catch(error){$('#result-panel').hidden=true;$('#error').textContent=error.message;}
 });
 $('#patient-name').addEventListener('input',()=>$('#patient-name').setCustomValidity(''));
-function renderCaseSummary(){
- const host=$('#result-panel'),c=haemorrhageCase;host.replaceChildren();host.hidden=false;
+function renderCaseSummary(c){
+ $('#error').textContent='';
+ const host=$('#result-panel');host.replaceChildren();host.hidden=false;
  const patient={name:$('#patient-name').value.trim(),id:$('#patient-id').value.trim()||`NT-${crypto.randomUUID().slice(0,8).toUpperCase()}`,age:$('#patient-age').value,sex:$('#patient-sex').value};
  $('#patient-id').value=patient.id;
  const report={id:`RPT-${crypto.randomUUID().slice(0,8).toUpperCase()}`,createdAt:new Date().toISOString()};
@@ -46,7 +49,7 @@ function renderCaseSummary(){
  });
  const actions=add(host,'div','','report-actions');
  button(actions,'Download Report',()=>{
-  const html=demonstrationReportHTML(patient,report);
+  const html=demonstrationReportHTML(patient,report,c);
   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
   const a=document.createElement('a');a.href=url;a.download=`MRI_Report_${patient.name.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50)}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
   toast('Report downloaded. Open it to print or save as PDF.');

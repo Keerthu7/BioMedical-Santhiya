@@ -70,3 +70,7 @@ The default model fetch wrapper also preserves the browser fetch receiver, avoid
 ## Patient report download
 
 Enter patient name, age and sex, plus an optional patient number (generated if blank). After Analyse MRI, **Download Report** appears below the conclusion. It downloads a self-contained HTML report named for the patient, with report ID, India-time issue date, patient details and numbered problem/treatment/outcome sections. The A4 print layout includes a Print / Save as PDF button. This is an HTML download with browser PDF printing, not a direct PDF file download. It carries educational context and is not a signed diagnostic report. Patient fields remain on the device; this case report is not added to model-prediction history.
+
+## Two supplied image sets
+
+The main form matches SHA-256 of the original uploaded file bytes to four supplied example files. Set 1 retrieves the haemorrhage educational text; Set 2 retrieves the brain-lesion educational text. Either order or a single example from a set works. Unknown files and mixed sets show an explanatory message instead of an unrelated medical answer. Renaming a file does not affect matching; editing, recompressing or taking a screenshot changes the bytes and requires the original file. Images are not bundled or uploaded to a server. Hash matching is a saved-case lookup, not lesion or haemorrhage detection. Both results use the same patient report template with the matching title and content.
