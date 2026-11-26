@@ -1,6 +1,6 @@
 # AI Based Brain Tumor Detection from MRI using Deep Learning
 
-The code now implements an MRI-oriented frontend and a real ONNX/CNN integration contract. The former OCR, treatment-option and kidney-stone code is archived under `legacy/`, outside the published `dist/` folder. No sample scans or predefined medical results are bundled.
+The code now implements an MRI-oriented frontend and a real ONNX/CNN integration contract. The former OCR, treatment-option and kidney-stone code is archived under `legacy/`, outside the published `dist/` folder. No sample scans are bundled. An explicitly selected educational haemorrhage case is available separately from model inference.
 
 ## Current status
 
@@ -54,3 +54,15 @@ Completed analyses can be saved to localStorage (maximum 100 records), including
 No-tumour is a dataset label, not a certificate of health. Scores are uncalibrated and cannot be interpreted as disease probabilities. The system does not estimate tumour size, grade, growth, treatment response or suitable treatment. Research use only; qualified clinical interpretation is required.
 
 References: https://onnxruntime.ai/docs/get-started/with-javascript/web.html and https://docs.pytorch.org/docs/stable/onnx.html
+
+## Findings and next steps
+
+Each uploaded scan now has a separate problem/finding and next-step explanation, also included in downloaded reports. Uncertain predictions do not name a confirmed disease; the no-tumour class does not rule out other conditions. Treatment is not inferred from a classification. When inference is unavailable, each uploaded scan explicitly says that no problem can be determined and explains what is needed. These incomplete attempts are not saved as completed predictions.
+
+Use original MRI images appropriate to the model dataset. Colourised, watermarked stock illustrations and screenshots (such as the supplied examples) are not a basis for a clinical diagnosis. Uploading two images does not train or validate the model; the missing trained model remains required for actual detection.
+
+## Haemorrhage presentation case
+
+Upload the provided example images into Scan A and/or Scan B (either order), enter a fictional presentation name, and select **Use supplied haemorrhage demonstration case**. Click **Analyse MRI · Demo**. The result below the scans includes the supplied problem, medical and surgical options, immediate priorities, possible outcomes and conclusion. A printable HTML demonstration report is available.
+
+This is user-supplied educational case content, explicitly labelled on screen and in exports. It does not inspect pixels to detect bleeding, use filenames to diagnose, produce a confidence score, or save a demonstration as a completed AI prediction. Unchecking the case option returns to the existing tumour-model inference workflow. The current four-class tumour contract cannot detect haemorrhage; real haemorrhage detection needs a separately trained and evaluated model and clinical validation.

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash,webcrypto} from 'node:crypto';
-import {MRIClassifier,ModelUnavailableError,validateManifest,preprocessRGBA,predictionFromLogits,comparePredictions,reportHTML,CLASS_IDS} from '../dist/mri-engine.mjs';
+import {MRIClassifier,ModelUnavailableError,validateManifest,preprocessRGBA,predictionFromLogits,comparePredictions,reportHTML,CLASS_IDS,findingSummary} from '../dist/mri-engine.mjs';
 const bytes=new Uint8Array([1,2,3,4]);
 const manifest={schema:1,ready:true,version:'software-test-only',file:'brain-mri.onnx',sha256:createHash('sha256').update(bytes).digest('hex'),classes:CLASS_IDS,inputName:'image',outputName:'logits',width:128,height:128,channels:1,layout:'NCHW',normalization:'rgb_luma_bilinear_0_1_v1',reviewThreshold:.7};
 test('missing model fails without importing runtime or producing a label',async()=>{
@@ -22,3 +22,26 @@ test('patient reports escape text and reject unsafe preview URLs',()=>{const r={
 test('public MRI route has no OCR or predefined-case dependency',()=>{const app=fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8');assert(!/tesseract|demo-case|ocr\.js|isDemoImage/.test(app));assert.equal(JSON.parse(fs.readFileSync(new URL('../dist/model/manifest.json',import.meta.url),'utf8')).ready,false);});
 
 test('Python training and browser preprocessing agree on reference pixels',()=>{const r=JSON.parse(fs.readFileSync(new URL('./preprocess-reference.json',import.meta.url),'utf8'));const actual=preprocessRGBA(Uint8ClampedArray.from(r.rgba),r.width,r.height);r.points.forEach((point,i)=>assert(Math.abs(actual[point]-r.expected[i])<1e-7));});
+
+test('finding and next step stay honest for missing, uncertain and predicted results',()=>{
+ assert.match(findingSummary(null).problem,/no model prediction/);
+ const uncertain=predictionFromLogits([0,0,0,0],manifest);
+ assert.match(findingSummary(uncertain).problem,/Inconclusive/);
+ const negative=predictionFromLogits([0,0,0,8],manifest);
+ assert.match(findingSummary(negative).problem,/does not rule out/);
+ const positive=predictionFromLogits([8,0,0,0],manifest);
+ assert.match(findingSummary(positive).problem,/Possible Glioma/);
+ assert.match(findingSummary(positive).nextStep,/confirmed diagnosis/);
+ const html=reportHTML({patient:{name:'Test',id:'1'},createdAt:'2026-11-26',status:'completed',results:[positive],summary:''});
+ assert(html.includes('Problem / finding:'));assert(html.includes('Next step:'));assert(html.includes('Possible Glioma'));
+});
+
+test('haemorrhage demonstration report identifies its source and escapes uploaded details',async()=>{
+ const {haemorrhageCase,demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
+ const html=demonstrationReportHTML('<script>patient</script>',[{slot:'B',filename:'<img onerror=bad>',preview:'javascript:bad'}]);
+ assert(html.includes('Demonstration case'));assert(html.includes('Not an AI detection'));
+ assert(html.includes('Scan B'));assert(html.includes('&lt;script&gt;patient'));
+ assert(!html.includes('javascript:bad'));assert(!html.includes('<img onerror'));
+ for(const section of haemorrhageCase.sections)assert(html.includes(section.title));
+ assert(html.includes('not a prediction'));assert(html.includes('Print / Save as PDF'));
+});
