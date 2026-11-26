@@ -34,7 +34,6 @@ $('#analysis-form').addEventListener('submit',e=>{
 $('#patient-name').addEventListener('input',()=>$('#patient-name').setCustomValidity(''));
 function renderCaseSummary(){
  const host=$('#result-panel'),c=haemorrhageCase;host.replaceChildren();host.hidden=false;
- add(host,'p',c.provenance,'muted');
  c.sections.forEach(section=>{
   const block=add(host,'section','','finding');add(block,section.level===3?'h3':'h2',section.title);
   if(section.intro)add(block,'p',section.intro);
