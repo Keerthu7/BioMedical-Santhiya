@@ -39,7 +39,7 @@ test('finding and next step stay honest for missing, uncertain and predicted res
 test('haemorrhage demonstration report identifies its source and escapes uploaded details',async()=>{
  const {haemorrhageCase,demonstrationReportHTML}=await import('../dist/haemorrhage-case.mjs');
  const html=demonstrationReportHTML('<script>patient</script>',[{slot:'B',filename:'<img onerror=bad>',preview:'javascript:bad'}]);
- assert(html.includes('Educational case reference'));assert(html.includes('not a scan-derived diagnosis'));
+ assert(html.includes('Educational case reference'));assert(!html.includes('<footer'));assert(!html.includes('Content describes the supplied case'));assert(!html.includes('Clinical decisions require'));assert(!html.includes('NeuroTwin •'));
  assert(!html.includes('Scan B'));assert(html.includes('&lt;script&gt;patient'));
  assert(!html.includes('javascript:bad'));assert(!html.includes('<img onerror'));
  for(const section of haemorrhageCase.sections)assert(html.includes(section.title));
