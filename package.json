@@ -1,0 +1,1 @@
+{"name":"neurotwin-mri","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","prepare-runtime":"node tools/prepare-runtime.mjs"},"dependencies":{"onnxruntime-web":"1.23.2"}}

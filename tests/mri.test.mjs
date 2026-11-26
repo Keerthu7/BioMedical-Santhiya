@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createHash,webcrypto} from 'node:crypto';
+import {MRIClassifier,ModelUnavailableError,validateManifest,preprocessRGBA,predictionFromLogits,comparePredictions,reportHTML,CLASS_IDS} from '../dist/mri-engine.mjs';
+const bytes=new Uint8Array([1,2,3,4]);
+const manifest={schema:1,ready:true,version:'software-test-only',file:'brain-mri.onnx',sha256:createHash('sha256').update(bytes).digest('hex'),classes:CLASS_IDS,inputName:'image',outputName:'logits',width:128,height:128,channels:1,layout:'NCHW',normalization:'rgb_luma_bilinear_0_1_v1',reviewThreshold:.7};
+test('missing model fails without importing runtime or producing a label',async()=>{
+ let runtime=false;const model=new MRIClassifier({fetcher:async()=>({ok:true,json:async()=>({ready:false})}),loadRuntime:async()=>{runtime=true;},cryptoProvider:webcrypto});
+ await assert.rejects(model.predict(new Float32Array(128*128)),ModelUnavailableError);assert.equal(runtime,false);
+});
+test('class order and preprocessing mismatch are rejected',()=>{assert.throws(()=>validateManifest({...manifest,classes:[...CLASS_IDS].reverse()}),/class order/);assert.throws(()=>validateManifest({...manifest,width:224}),/preprocessing/);});
+test('model checksum must match before runtime loads',async()=>{let runtime=false;const model=new MRIClassifier({fetcher:async url=>url.endsWith('.json')?{ok:true,json:async()=>manifest}:{ok:true,arrayBuffer:async()=>new Uint8Array([9]).buffer},loadRuntime:async()=>{runtime=true;},cryptoProvider:webcrypto});await assert.rejects(model.load(),/integrity/);assert.equal(runtime,false);});
+test('configured inference uses actual session result and caches model',async()=>{
+ let loads=0,runs=0;const model=new MRIClassifier({fetcher:async url=>url.endsWith('.json')?{ok:true,json:async()=>manifest}:{ok:true,arrayBuffer:async()=>bytes.buffer},cryptoProvider:webcrypto,loadRuntime:async()=>{loads++;return {env:{wasm:{}},Tensor:class{constructor(type,data,dims){this.data=data;this.dims=dims;}},InferenceSession:{create:async()=>({inputNames:['image'],outputNames:['logits'],run:async inputs=>{runs++;assert.deepEqual(inputs.image.dims,[1,1,128,128]);return {logits:{dims:[1,4],data:Float32Array.from([0,6,0,0])}};}})}};}});
+ const first=await model.predict(new Float32Array(128*128));const second=await model.predict(new Float32Array(128*128));assert.equal(first.classId,'meningioma');assert.equal(second.modelVersion,'software-test-only');assert.equal(loads,1);assert.equal(runs,2);
+});
+test('scores are stable and ambiguous cases request review',()=>{const a=predictionFromLogits([1000,1000,1000,1000],manifest);assert.equal(a.status,'review_required');assert.equal(a.score,.25);assert.throws(()=>predictionFromLogits([NaN,1,2,3],manifest));const b=predictionFromLogits([0,0,0,10],manifest);assert.equal(b.classId,'no_tumour');assert(Math.abs(b.scores.reduce((x,y)=>x+y,0)-1)<1e-12);});
+test('pixel preprocessing has known RGB/alpha and bilinear behavior',()=>{const data=preprocessRGBA(new Uint8ClampedArray([255,0,0,255,0,0,255,255]),2,1);assert.equal(data.length,16384);assert(Math.abs(data[0]-.299)<1e-6);assert(Math.abs(data[127]-.114)<1e-6);const black=preprocessRGBA(new Uint8ClampedArray([255,255,255,0]),1,1);assert(black.every(x=>x===0));assert.throws(()=>preprocessRGBA([],0,1));});
+test('comparison does not claim tumour growth',()=>{const a=predictionFromLogits([6,0,0,0],manifest),b=predictionFromLogits([0,6,0,0],manifest);assert.match(comparePredictions([a,b]),/does not establish growth/);assert.match(comparePredictions([a,a]),/does not establish that tumour size/);});
+test('patient reports escape text and reject unsafe preview URLs',()=>{const r={patient:{name:'<script>bad()</script>',id:'ID & 1'},createdAt:'2026-11-26',status:'completed',results:[{...predictionFromLogits([6,0,0,0],manifest),filename:'<b>scan</b>',preview:'javascript:alert(1)'}],summary:'Test'};const h=reportHTML(r);assert(h.includes('&lt;script&gt;'));assert(!h.includes('<script>bad'));assert(!h.includes('javascript:'));assert(h.includes('Print / Save as PDF'));});
+test('public MRI route has no OCR or predefined-case dependency',()=>{const app=fs.readFileSync(new URL('../dist/app.js',import.meta.url),'utf8');assert(!/tesseract|demo-case|ocr\.js|isDemoImage/.test(app));assert.equal(JSON.parse(fs.readFileSync(new URL('../dist/model/manifest.json',import.meta.url),'utf8')).ready,false);});
+
+test('Python training and browser preprocessing agree on reference pixels',()=>{const r=JSON.parse(fs.readFileSync(new URL('./preprocess-reference.json',import.meta.url),'utf8'));const actual=preprocessRGBA(Uint8ClampedArray.from(r.rgba),r.width,r.height);r.points.forEach((point,i)=>assert(Math.abs(actual[point]-r.expected[i])<1e-7));});

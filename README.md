@@ -1,34 +1,56 @@
-# Report Companion
+# AI Based Brain Tumor Detection from MRI using Deep Learning
 
-Sandhiya's ME project foundation: a browser-only, multi-report educational demonstration. No external AI service, report persistence, or clinical validation is implemented. Do not use for patient care.
+The code now implements an MRI-oriented frontend and a real ONNX/CNN integration contract. The former OCR, treatment-option and kidney-stone code is archived under `legacy/`, outside the published `dist/` folder. No sample scans or predefined medical results are bundled.
 
-## Run
+## Current status
 
-From this directory: `python -m http.server 8080 --directory dist`, then visit http://localhost:8080.
+MRI upload and preview, patient details, optional two-image comparison, model loading, preprocessing, output validation, named printable reports and browser Activity history are implemented. **No trained medical model was supplied.** `dist/model/manifest.json` deliberately has `ready: false`. The website displays Model not configured and does not invent tumour labels or scores. History/report prediction flows become available only after actual inference succeeds.
 
-## Deploy on Vercel
+There is no trained-model accuracy claim. Model inference orchestration is software-tested with controlled mocks; this is not a validation of medical performance. DICOM, tumour segmentation, Grad-CAM and actual PDF-file generation are not implemented. Reports download as standalone HTML with Print / Save as PDF.
 
-Import the GitHub repository and leave Root Directory at the repository root. The tracked `vercel.json` selects the Other framework preset, skips installation/building, and serves the existing `dist` folder. No environment variables are needed. If an older deployment used another root or framework setting, correct the project settings and redeploy the latest `main` commit.
+## Run locally
 
-## Implemented
+```powershell
+npm ci --ignore-scripts
+npm run prepare-runtime
+python -m http.server 8080 --directory dist --bind 127.0.0.1
+```
 
-Paste report text or upload a UTF-8 .txt file (1 MB and 30,000-character limits); synthetic ultrasound, wrist X-ray, and blood examples; keyword matching for four finding groups; conservative context flags; visible unmatched text; linked public medical sources; text explanation download; clear/reset. Multiple finding groups can appear in one report. No negative result establishes a normal report. Reports remain in page memory and downloads only.
+Open http://127.0.0.1:8080/. Keep the terminal open. `npm test` runs the software checks. If the runtime has already been prepared, the Python server command alone is sufficient for local preview.
 
-Written report photos (JPG/PNG/WebP, up to 10 MB) can be read using Tesseract.js 7.0.0 in the browser. Upload shows a preview; **Analyse report** runs OCR and immediately displays matched problems and possible care options. No confirmation checkbox is required. English printed text only. Includes progress, cancellation, a two-minute extraction timeout, and editable extracted text in a disclosure. Correct the text and click Analyse report again to update results without repeating OCR. Automatically extracted text and findings are clearly marked unverified. OCR assets are fetched from public CDNs; report images are processed locally. Network access is required for the first engine/language downloads. Actual medical scan images, PDFs, HEIC, and handwriting are unsupported. OCR does not expand the four supported finding groups or establish clinical accuracy.
+## Vercel
 
-The matcher is deliberately limited. Sentence context handling is not a clinically reliable negation algorithm. It does not extract or interpret measurements, lab thresholds, detect emergencies, recognize all diagnoses, or establish whether a care option is appropriate. Sources need clinician review and versioned maintenance before real use.
+Keep the repository root as Vercel's Root Directory. The updated `vercel.json` runs `npm ci --ignore-scripts`, copies the CPU browser inference runtime into `dist/runtime`, and publishes `dist`. The package lock is included. There is no Python function, paid model API or secret key in this frontend. Inference runs locally in the browser when a compatible model is installed. Do not deploy the root `ml/` or `legacy/` as public assets.
 
-## Next implementation stages
+These are local source changes. The deployed Vercel website will update only after the changed repository is redeployed. No push or Vercel publication has been performed by this migration.
 
-### Presentation demo
+## Train a real model
 
-A designated reference image is identified locally by SHA-256 and opens a conspicuously labelled, predefined kidney-stone educational case. The reference image itself is not bundled, transmitted, or previewed. It is a demonstration fixture, not image diagnosis. Other images continue through written-text OCR. Editing, resizing, or re-encoding the designated file changes its hash and does not select the fixture. Result downloads preserve the demo disclosure. Do not present this fixture as clinical or AI validation.
+Training requires a licensed, reliably labelled real MRI dataset. The old synthetic fixtures and kidney-stone example are not an MRI training dataset. Group related slices by patient and keep patients in only one split. Four classes are fixed in this order: `glioma`, `meningioma`, `pituitary`, `no_tumour`.
 
-1. Work with the project guide and a clinical advisor to define supported report types and evaluation labels.
-2. Add PDF extraction and extend photo OCR with rotation, more languages, and clinically evaluated extraction-quality checks.
-3. Build a typed finding schema preserving source text, negation, uncertainty, measurements, and missing context.
-4. Add a server-side AI provider with secrets outside browser code, clinician-reviewed retrieval, citation verification, and abstention for unsupported findings.
-5. Add clinician review as a real workflow, with consent, access controls, retention rules, and appropriately approved de-identified evaluation data.
-6. Evaluate extraction errors, unsupported claims, missed findings, negation failures, and patient comprehension against clinician-reviewed cases.
+Prepare a CSV with columns `path,patient_id,label,split`. Paths are relative to the dataset root; split is `train`, `val` or `test`. The validator rejects missing files, unsafe paths, unknown labels, patient overlap and incomplete class coverage. Patient grouping must be genuine; do not invent per-image patient IDs to bypass leakage checks.
 
-Suggested dissertation comparison: baseline model versus source-grounded model with validation and abstention. The current prototype is a UI and deterministic baseline, not the final AI system.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r ml/requirements.txt
+.\.venv\Scripts\python.exe ml/train.py --manifest path/to/manifest.csv --data-root path/to/mri-dataset --epochs 30
+npm run prepare-runtime
+```
+
+The training script fits a baseline CNN, selects weights by validation loss, evaluates once on the specified held-out test set, exports `brain-mri.onnx`, checks PyTorch/ONNX numerical agreement, and writes metrics, test predictions and the final model manifest. It has been syntax-checked but has **not been trained or exercised end to end** because no dataset or trained medical artifact was available. The deep-learning dependencies are listed separately and are not installed by the frontend's npm command.
+
+Review test results and the data provenance before deploying the exported files. `dist/model/brain-mri.onnx` must accompany its manifest; it is not ignored by Git. The default 0.7 review threshold is a project operating setting, not a clinically validated decision rule. Choose a threshold using validation data and document its behavior. Do not tune on the final test set. Training accuracy is not test accuracy.
+
+## Model contract
+
+Input: `image`, float32 NCHW `[1,1,128,128]`. Output: `logits`, `[1,4]`. Preprocessing `rgb_luma_bilinear_0_1_v1` is explicit, shared between Python and JavaScript: EXIF-oriented image, alpha over black, RGB luma coefficients 0.299/0.587/0.114, clamped half-pixel bilinear resampling, and scaling to 0-1. The browser rejects incompatible metadata and incorrect SHA-256 weights before executing the model. A filename or file hash is never used as the medical prediction.
+
+Upload formats: PNG/JPEG/WEBP, at most 10 MB and 12 megapixels. PDF/TXT/DICOM/HEIC and corrupt files are rejected. Format validation is not proof that an image is a brain MRI. Out-of-distribution inputs can still produce misleading model scores and require separate evaluation.
+
+## History and reports
+
+Completed analyses can be saved to localStorage (maximum 100 records), including patient text, reduced image previews, model version and scores. There is no account, cloud backup or hospital integration. History is origin/browser/device specific and unencrypted by this application. Use fictional details for demonstrations. Storage failures are reported and do not silently delete old records. Full-resolution scans are not persisted. Patient/report text is escaped on rendering and export.
+
+No-tumour is a dataset label, not a certificate of health. Scores are uncalibrated and cannot be interpreted as disease probabilities. The system does not estimate tumour size, grade, growth, treatment response or suitable treatment. Research use only; qualified clinical interpretation is required.
+
+References: https://onnxruntime.ai/docs/get-started/with-javascript/web.html and https://docs.pytorch.org/docs/stable/onnx.html

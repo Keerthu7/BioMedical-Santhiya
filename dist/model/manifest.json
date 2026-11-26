@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "ready": false,
+  "version": null,
+  "file": "brain-mri.onnx",
+  "sha256": null,
+  "inputName": "image",
+  "outputName": "logits",
+  "width": 128,
+  "height": 128,
+  "channels": 1,
+  "layout": "NCHW",
+  "normalization": "rgb_luma_bilinear_0_1_v1",
+  "classes": ["glioma", "meningioma", "pituitary", "no_tumour"],
+  "reviewThreshold": 0.7,
+  "evaluation": null
+}
